@@ -1,6 +1,7 @@
 # AMLS_II_assignment23_24
 
-This repo is for the final assignment of ELEC0135 Applied Machine Learning Systems II (23/24).
+* Name: Zhaoyan LU
+* Student ID: 23049710
 
 ## Contents
 
@@ -12,6 +13,7 @@ This repo is for the final assignment of ELEC0135 Applied Machine Learning Syste
 
 ## Overview
 
+This repo is for the final assignment of ELEC0135 Applied Machine Learning Systems II (23/24).
 This project aims at solving the [Cassava Leaf Disease Classification](https://www.kaggle.com/competitions/cassava-leaf-disease-classification/) task on [Kaggle](https://www.kaggle.com/) using Deep Neural Network (DNN).
 
 ## Repo Structure
