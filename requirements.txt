@@ -1,0 +1,4 @@
+# download the dataset from kaggle
+kaggle==1.6.6
+# format python code
+black==24.2.0

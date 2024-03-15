@@ -1,0 +1,8 @@
+cassava-leaf-disease-classification.zip
+label_num_to_disease_map.json
+sample_submission.csv
+test_images/**
+test_tfrecords/**
+train.csv
+train_images/**
+train_tfrecords/**
