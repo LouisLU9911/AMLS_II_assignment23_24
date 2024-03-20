@@ -1,4 +1,11 @@
 # download the dataset from kaggle
-kaggle==1.6.6
+kaggle
 # format python code
-black==24.2.0
+black[jupyter]
+# data preprocess
+pandas
+tqdm
+datasets
+Pillow
+# training
+transformers

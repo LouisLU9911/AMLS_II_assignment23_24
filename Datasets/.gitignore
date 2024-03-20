@@ -6,3 +6,4 @@ test_tfrecords/**
 train.csv
 train_images/**
 train_tfrecords/**
+imagefolder/**

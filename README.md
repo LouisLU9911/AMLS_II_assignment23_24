@@ -25,9 +25,12 @@ This project aims at solving the [Cassava Leaf Disease Classification](https://w
 
 ```
 # download the dataset from kaggle
-kaggle==1.6.6
+kaggle
 # format python code
-black==24.2.0
+black[jupyter]
+# data preprocess
+pandas
+tqdm
 ```
 
 Create conda env:
@@ -40,7 +43,7 @@ $ conda env create -f environment.yml
 
 ## Datasets
 
-Download the dataset:
+We are using the dataset provided by the [competition](https://www.kaggle.com/competitions/cassava-leaf-disease-classification/data).
 
 ```bash
 # Step 0: enter conda env
@@ -51,6 +54,7 @@ $ make datasets
 $ cd Datasets
 $ kaggle competitions download -c cassava-leaf-disease-classification
 $ unzip -q cassava-leaf-disease-classification.zip
+$ python prepare.py
 ```
 
 ## Usage
