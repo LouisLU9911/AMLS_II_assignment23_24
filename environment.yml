@@ -1,7 +1,15 @@
 name: amls_ii-final-uceezl8
-
+channels:
+  - defaults
 dependencies:
   - python=3.9
-  - pip
+  - black
+  - scikit-learn
+  - pandas
+  - ipython
+  - pillow
+  - torchvision
+  - pytorch
+  - pytorch-cuda=11.8
   - pip:
     - -r requirements.txt

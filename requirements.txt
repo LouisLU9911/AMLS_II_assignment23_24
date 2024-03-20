@@ -1,11 +1,5 @@
 # download the dataset from kaggle
 kaggle
-# format python code
-black[jupyter]
-# data preprocess
-pandas
-tqdm
+# preprocess
 datasets
-Pillow
-# training
-transformers
+transformers[torch]
