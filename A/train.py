@@ -19,7 +19,7 @@ from torchvision.transforms import (
     ToTensor,
 )
 
-BATCH_SIZE = 10
+BATCH_SIZE = 50
 
 cwd = os.getcwd()
 train_image_folder = os.path.join(cwd, "Datasets", "imagefolder")
