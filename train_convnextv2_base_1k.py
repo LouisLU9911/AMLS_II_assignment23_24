@@ -19,7 +19,9 @@ from torchvision.transforms import (
     ToTensor,
 )
 
-BATCH_SIZE = 60
+BATCH_SIZE = 180
+NUM_TRAIN_EPOCHS = 20
+NUM_WORKERS = 15
 
 cwd = os.getcwd()
 train_image_folder = os.path.join(cwd, "Datasets", "imagefolder")
@@ -95,9 +97,9 @@ args = TrainingArguments(
     learning_rate=5e-5,
     per_device_train_batch_size=BATCH_SIZE,
     gradient_accumulation_steps=4,
-    dataloader_num_workers=5,
+    dataloader_num_workers=NUM_WORKERS,
     per_device_eval_batch_size=BATCH_SIZE,
-    num_train_epochs=15,
+    num_train_epochs=NUM_TRAIN_EPOCHS,
     warmup_ratio=0.1,
     logging_steps=10,
     load_best_model_at_end=True,
