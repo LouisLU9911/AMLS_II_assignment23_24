@@ -19,7 +19,7 @@ from torchvision.transforms import (
     ToTensor,
 )
 
-BATCH_SIZE = 90
+BATCH_SIZE = 120
 NUM_TRAIN_EPOCHS = 20
 NUM_WORKERS = 15
 
@@ -92,8 +92,8 @@ model_name = model_checkpoint.split("/")[-1]
 args = TrainingArguments(
     f"{model_name}-finetuned-cassava-leaf-disease",
     remove_unused_columns=False,
-    evaluation_strategy="epoch",
-    save_strategy="epoch",
+    evaluation_strategy="steps",
+    save_strategy="steps",
     learning_rate=5e-5,
     per_device_train_batch_size=BATCH_SIZE,
     gradient_accumulation_steps=4,
