@@ -20,8 +20,10 @@ from torchvision.transforms import (
 )
 
 BATCH_SIZE = 180
-NUM_TRAIN_EPOCHS = 20
-NUM_WORKERS = 15
+NUM_TRAIN_EPOCHS = 16
+CUDA_VISIBLE_DEVICES = os.getenv("CUDA_VISIBLE_DEVICES", "0,1,2,3")
+NUM_WORKERS = 5 * len(CUDA_VISIBLE_DEVICES.split(","))
+DATALOADER_PREFETCH_FACTOR = 1
 
 cwd = os.getcwd()
 train_image_folder = os.path.join(cwd, "Datasets", "imagefolder")
@@ -77,15 +79,20 @@ def preprocess_val(example_batch):
 
 
 # split up training into training + validation
-splits = dataset["train"].train_test_split(test_size=0.1)
+splits = dataset["train"].train_test_split(test_size=0.1, stratify_by_column="label")
 train_ds = splits["train"]
 val_ds = splits["test"]
 train_ds.set_transform(preprocess_train)
 val_ds.set_transform(preprocess_val)
 
+id2label = {i: i for i in range(5)}
+label2id = {i: i for i in range(5)}
+
 model = AutoModelForImageClassification.from_pretrained(
     model_checkpoint,
-    # token = access_token,
+    label2id=label2id,
+    id2label=id2label,
+    ignore_mismatched_sizes = True, # provide this in case you're planning to fine-tune an already fine-tuned checkpoint
 )
 model_name = model_checkpoint.split("/")[-1]
 
@@ -97,7 +104,9 @@ args = TrainingArguments(
     learning_rate=5e-5,
     per_device_train_batch_size=BATCH_SIZE,
     gradient_accumulation_steps=4,
+    # dataloader_persistent_workers=True,
     dataloader_num_workers=NUM_WORKERS,
+    dataloader_prefetch_factor=DATALOADER_PREFETCH_FACTOR,
     per_device_eval_batch_size=BATCH_SIZE,
     num_train_epochs=NUM_TRAIN_EPOCHS,
     warmup_ratio=0.1,
@@ -130,6 +139,7 @@ trainer = Trainer(
     args,
     train_dataset=train_ds,
     eval_dataset=val_ds,
+    tokenizer=image_processor,
     compute_metrics=compute_metrics,
     data_collator=collate_fn,
 )
