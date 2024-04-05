@@ -4,3 +4,5 @@ resnet-101-finetuned-cassava-leaf-disease
 resnet-152-finetuned-cassava-leaf-disease
 convnextv2-base-1k-224-finetuned-cassava-leaf-disease
 convnextv2-tiny-1k-224-finetuned-cassava-leaf-disease
+convnextv2-large-1k-224-finetuned-cassava-leaf-disease
+convnextv2-huge-1k-224-finetuned-cassava-leaf-disease
