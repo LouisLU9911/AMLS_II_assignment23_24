@@ -12,3 +12,6 @@ clean-dataset:
 
 create-env:
 	conda env create -f environment.yml
+
+export-env:
+	conda env export --from-history > environment.yml

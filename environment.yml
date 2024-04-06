@@ -11,5 +11,6 @@ dependencies:
   - torchvision
   - pytorch
   - pytorch-cuda=11.8
+  - matplotlib
   - pip:
     - -r requirements.txt
