@@ -46,6 +46,15 @@ print(confusion_matrix(y, y_pred))
 #  [   1    9   17 1270   19]
 #  [  17   10    9   21  201]]
 
+# array([[0.45, 0.11, 0.02, 0.07, 0.35],
+#        [0.07, 0.79, 0.02, 0.05, 0.08],
+#        [0.01, 0.02, 0.79, 0.11, 0.08],
+#        [0.  , 0.01, 0.01, 0.97, 0.01],
+#        [0.07, 0.04, 0.03, 0.08, 0.78]], dtype=float32)
+
+# 0, 4
+# 1, 2, 3
+
 print(classification_report(y, y_pred))
 #               precision    recall  f1-score   support
 

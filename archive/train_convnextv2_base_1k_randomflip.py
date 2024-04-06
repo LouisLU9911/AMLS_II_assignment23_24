@@ -14,12 +14,13 @@ from torchvision.transforms import (
     Compose,
     Normalize,
     RandomHorizontalFlip,
+    RandomVerticalFlip,
     RandomResizedCrop,
     Resize,
     ToTensor,
 )
 
-BATCH_SIZE = 180
+BATCH_SIZE = 200
 NUM_TRAIN_EPOCHS = 16
 CUDA_VISIBLE_DEVICES = os.getenv("CUDA_VISIBLE_DEVICES", "0,1,2,3")
 NUM_WORKERS = 5 * len(CUDA_VISIBLE_DEVICES.split(","))
@@ -47,6 +48,7 @@ train_transforms = Compose(
     [
         RandomResizedCrop(crop_size),
         RandomHorizontalFlip(),
+        RandomVerticalFlip(),
         ToTensor(),
         normalize,
     ]
@@ -92,12 +94,12 @@ model = AutoModelForImageClassification.from_pretrained(
     model_checkpoint,
     label2id=label2id,
     id2label=id2label,
-    ignore_mismatched_sizes = True, # provide this in case you're planning to fine-tune an already fine-tuned checkpoint
+    ignore_mismatched_sizes=True,  # provide this in case you're planning to fine-tune an already fine-tuned checkpoint
 )
 model_name = model_checkpoint.split("/")[-1]
 
 args = TrainingArguments(
-    f"{model_name}-finetuned-cassava-leaf-disease",
+    f"{model_name}-finetuned-cassava-leaf-disease-randomflip",
     remove_unused_columns=False,
     evaluation_strategy="epoch",
     save_strategy="epoch",
