@@ -141,6 +141,7 @@ def get_preprocess_func(image_processor):
         Compose,
         Normalize,
         RandomHorizontalFlip,
+        RandomVerticalFlip,
         RandomResizedCrop,
         Resize,
         ToTensor,
@@ -160,6 +161,7 @@ def get_preprocess_func(image_processor):
         [
             RandomResizedCrop(crop_size),
             RandomHorizontalFlip(),
+            RandomVerticalFlip(),
             ToTensor(),
             normalize,
         ]
@@ -209,6 +211,7 @@ def training(
         TrainingArguments,
         Trainer,
     )
+
     CUDA_VISIBLE_DEVICES = os.getenv("CUDA_VISIBLE_DEVICES", "0,1,2,3")
     NUM_WORKERS = n_workers * len(CUDA_VISIBLE_DEVICES.split(","))
 
@@ -326,7 +329,9 @@ def main():
             elif args.mode == "inference":
                 inference()
             else:
-                raise Exception(f"Invalid solve mode: {args.mode}; Please set --mode MODE!")
+                raise Exception(
+                    f"Invalid solve mode: {args.mode}; Please set --mode MODE!"
+                )
         else:
             raise Exception(f"Unsupported action: {args.action}")
     except Exception as e:
