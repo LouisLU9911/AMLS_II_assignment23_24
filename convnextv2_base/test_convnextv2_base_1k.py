@@ -1,12 +1,14 @@
 import os
 
 from datasets import load_dataset
-from sklearn.metrics import confusion_matrix,classification_report
+from sklearn.metrics import confusion_matrix, classification_report
 from transformers import pipeline
 
 BATCH_SIZE = 180
 NUM_TRAIN_EPOCHS = 20
 NUM_WORKERS = 15
+CUDA_VISIBLE_DEVICES = os.getenv("CUDA_VISIBLE_DEVICES", "0,1,2,3")
+PIPELINE_DEVICE = int(CUDA_VISIBLE_DEVICES.split(",")[0])
 
 cwd = os.getcwd()
 train_image_folder = os.path.join(cwd, "Datasets", "imagefolder")
@@ -17,22 +19,34 @@ print("dataset setup successfully!")
 
 model_checkpoint = "louislu9911/convnextv2-base-1k-224-finetuned-cassava-leaf-disease"
 
-splits = dataset["train"].train_test_split(test_size=0.1, seed = 42, stratify_by_column="label")
+splits = dataset["train"].train_test_split(
+    test_size=0.1, seed=42, stratify_by_column="label"
+)
 train_ds = splits["train"]
 val_ds = splits["test"]
 
-image = val_ds['image']
+image = val_ds["image"]
 
-y = val_ds['label']
-# print(f"{y=}")
+y = val_ds["label"]
 
-pipe = pipeline("image-classification", model_checkpoint, device=3)
-y_pred = [d[0]['label'] for d in pipe.predict(image)]
+with open("y.txt", "w") as f:
+    f.write("\n".join([str(i) for i in y]))
 
-# print(f"{y_pred=}")
-# print(confusion_matrix(y, y_pred))
+pipe = pipeline("image-classification", model_checkpoint, device=PIPELINE_DEVICE)
+
+y_pred = [d[0]["label"] for d in pipe.predict(image)]
+
+with open("y_pred.txt", "w") as f:
+    f.write("\n".join([str(i) for i in y_pred]))
+
+print(confusion_matrix(y, y_pred))
+# [[  49   12    2    8   38]
+#  [  15  172    4   10   18]
+#  [   2    4  189   25   18]
+#  [   1    9   17 1270   19]
+#  [  17   10    9   21  201]]
+
 print(classification_report(y, y_pred))
-
 #               precision    recall  f1-score   support
 
 #            0       0.58      0.45      0.51       109
