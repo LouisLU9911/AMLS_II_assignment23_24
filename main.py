@@ -264,6 +264,7 @@ def training(
         warmup_ratio=0.1,
         logging_steps=10,
         load_best_model_at_end=True,
+        seed=seed,
         metric_for_best_model="accuracy",
         push_to_hub=push_to_hub,
     )

@@ -5,7 +5,10 @@ format:
 	black .
 
 dataset:
-	cd Datasets && kaggle competitions download -c cassava-leaf-disease-classification && unzip -q cassava-leaf-disease-classification.zip && python prepare.py
+	cd Datasets && kaggle competitions download -c cassava-leaf-disease-classification && unzip -q cassava-leaf-disease-classification.zip
+
+preprocess: dataset
+	cd Datasets && python prepare.py
 
 clean-dataset:
 	rm -rf Datasets/imagefolder

@@ -4,3 +4,4 @@ kaggle
 datasets
 transformers[torch]==4.39.3
 ipykernel
+timm
