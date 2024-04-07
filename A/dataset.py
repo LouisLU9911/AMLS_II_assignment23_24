@@ -3,7 +3,7 @@ from typing import List
 
 
 import pandas as pd
-from torchvision.io import read_image
+from PIL import Image
 from torch.utils.data import Dataset
 
 
@@ -26,7 +26,7 @@ class LeafDiseaseDataset(Dataset):
 
     def __getitem__(self, idx):
         img_path = os.path.join(self.img_dir, self.img_labels.iloc[idx, 0])
-        image = read_image(img_path)
+        image = Image.open(img_path)
         label = self.img_labels.iloc[idx, 1]
         if self.transform:
             image = self.transform(image)
@@ -41,8 +41,10 @@ def build_dataset(
     seed: int = 42,
     test_size: float = 0.1,
     allowed_labels: List[str] = None,
-    transform=None,
-    target_transform=None,
+    train_transform=None,
+    test_transform=None,
+    train_target_transform=None,
+    test_target_transform=None,
 ):
     """Build train and test Datasets for training."""
     import pandas as pd
@@ -64,16 +66,16 @@ def build_dataset(
     train_ds = LeafDiseaseDataset(
         train_df,
         img_dir=img_dir,
-        transform=transform,
-        target_transform=target_transform,
+        transform=train_transform,
+        target_transform=train_target_transform,
     )
     test_ds = LeafDiseaseDataset(
-        test_df, img_dir=img_dir, transform=transform, target_transform=target_transform
+        test_df, img_dir=img_dir, transform=test_transform, target_transform=test_target_transform
     )
     return train_ds, test_ds
 
 
-def build_transform(image_processor):
+def build_transform(image_processor=None, pretrained_cfg=None):
     from torchvision.transforms import (
         CenterCrop,
         Compose,
@@ -85,15 +87,24 @@ def build_transform(image_processor):
         ToTensor,
     )
 
-    normalize = Normalize(
-        mean=image_processor.image_mean, std=image_processor.image_std
-    )
-    if "height" in image_processor.size:
-        size = (image_processor.size["height"], image_processor.size["width"])
+    if image_processor:
+        normalize = Normalize(
+            mean=image_processor.image_mean, std=image_processor.image_std
+        )
+        if "height" in image_processor.size:
+            size = (image_processor.size["height"], image_processor.size["width"])
+            crop_size = size
+        elif "shortest_edge" in image_processor.size:
+            size = image_processor.size["shortest_edge"]
+            crop_size = (size, size)
+    elif pretrained_cfg:
+        size = (pretrained_cfg['input_size'][1], pretrained_cfg['input_size'][2])
         crop_size = size
-    elif "shortest_edge" in image_processor.size:
-        size = image_processor.size["shortest_edge"]
-        crop_size = (size, size)
+        normalize = Normalize(
+            mean=pretrained_cfg["mean"], std=pretrained_cfg["std"]
+        )
+    else:
+        raise Exception("Need to provide image_processor or pretrained_cfg!")
 
     train_transforms = Compose(
         [
