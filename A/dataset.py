@@ -52,16 +52,14 @@ def build_dataset(
 
     df = pd.read_csv(annotations_file)
 
-    # Filter allowed labels for different experts
-    if allowed_labels:
-        conditions = df["label"] == -1
-        for label in allowed_labels:
-            conditions |= df["label"] == label
-        df = df[conditions]
-
     train_df, test_df = train_test_split(
         df, test_size=test_size, stratify=df["label"], random_state=seed
     )
+
+    # Filter allowed labels for different experts
+    if allowed_labels:
+        train_df = train_df[train_df['label'].isin(allowed_labels)]
+        test_df = test_df[test_df['label'].isin(allowed_labels)]
 
     train_ds = LeafDiseaseDataset(
         train_df,
