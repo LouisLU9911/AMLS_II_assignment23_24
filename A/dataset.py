@@ -58,8 +58,8 @@ def build_dataset(
 
     # Filter allowed labels for different experts
     if allowed_labels:
-        train_df = train_df[train_df['label'].isin(allowed_labels)]
-        test_df = test_df[test_df['label'].isin(allowed_labels)]
+        train_df = train_df[train_df["label"].isin(allowed_labels)]
+        test_df = test_df[test_df["label"].isin(allowed_labels)]
 
     train_ds = LeafDiseaseDataset(
         train_df,
@@ -68,7 +68,10 @@ def build_dataset(
         target_transform=train_target_transform,
     )
     test_ds = LeafDiseaseDataset(
-        test_df, img_dir=img_dir, transform=test_transform, target_transform=test_target_transform
+        test_df,
+        img_dir=img_dir,
+        transform=test_transform,
+        target_transform=test_target_transform,
     )
     return train_ds, test_ds
 
@@ -96,11 +99,9 @@ def build_transform(image_processor=None, pretrained_cfg=None):
             size = image_processor.size["shortest_edge"]
             crop_size = (size, size)
     elif pretrained_cfg:
-        size = (pretrained_cfg['input_size'][1], pretrained_cfg['input_size'][2])
+        size = (pretrained_cfg["input_size"][1], pretrained_cfg["input_size"][2])
         crop_size = size
-        normalize = Normalize(
-            mean=pretrained_cfg["mean"], std=pretrained_cfg["std"]
-        )
+        normalize = Normalize(mean=pretrained_cfg["mean"], std=pretrained_cfg["std"])
     else:
         raise Exception("Need to provide image_processor or pretrained_cfg!")
 
