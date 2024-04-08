@@ -1,10 +1,38 @@
 import os
 from typing import List
 
+from .logger import logger
+from .constants import DEFAULT_RANDOM_SEED
 
 import pandas as pd
 from PIL import Image
 from torch.utils.data import Dataset
+
+
+def get_dataset(
+    cwd: str,
+    dataset_path: str,
+    seed: int = DEFAULT_RANDOM_SEED,
+):
+    from datasets import load_dataset
+
+    train_image_folder = os.path.join(cwd, dataset_path)
+    logger.info(f"Begin loading {train_image_folder} ...")
+    dataset = load_dataset(
+        "imagefolder",
+        data_dir=train_image_folder,
+        keep_in_memory=True,
+        trust_remote_code=True,
+    )
+    logger.info(f"Load {train_image_folder} successfully!")
+    splits = dataset["train"].train_test_split(
+        test_size=0.1,
+        stratify_by_column="label",
+        seed=seed,
+    )
+    train_ds = splits["train"]
+    val_ds = splits["test"]
+    return train_ds, val_ds
 
 
 class LeafDiseaseDataset(Dataset):
@@ -35,45 +63,45 @@ class LeafDiseaseDataset(Dataset):
         return image, label
 
 
-def build_dataset(
-    annotations_file: str,
-    img_dir: str,
-    seed: int = 42,
-    test_size: float = 0.1,
-    allowed_labels: List[str] = None,
-    train_transform=None,
-    test_transform=None,
-    train_target_transform=None,
-    test_target_transform=None,
-):
-    """Build train and test Datasets for training."""
-    import pandas as pd
-    from sklearn.model_selection import train_test_split
+# def build_dataset(
+#     annotations_file: str,
+#     img_dir: str,
+#     seed: int = 42,
+#     test_size: float = 0.1,
+#     allowed_labels: List[str] = None,
+#     train_transform=None,
+#     test_transform=None,
+#     train_target_transform=None,
+#     test_target_transform=None,
+# ):
+#     """Build train and test Datasets for training."""
+#     import pandas as pd
+#     from sklearn.model_selection import train_test_split
 
-    df = pd.read_csv(annotations_file)
+#     df = pd.read_csv(annotations_file)
 
-    train_df, test_df = train_test_split(
-        df, test_size=test_size, stratify=df["label"], random_state=seed
-    )
+#     train_df, test_df = train_test_split(
+#         df, test_size=test_size, stratify=df["label"], random_state=seed
+#     )
 
-    # Filter allowed labels for different experts
-    if allowed_labels:
-        train_df = train_df[train_df["label"].isin(allowed_labels)]
-        test_df = test_df[test_df["label"].isin(allowed_labels)]
+#     # Filter allowed labels for different experts
+#     if allowed_labels:
+#         train_df = train_df[train_df["label"].isin(allowed_labels)]
+#         test_df = test_df[test_df["label"].isin(allowed_labels)]
 
-    train_ds = LeafDiseaseDataset(
-        train_df,
-        img_dir=img_dir,
-        transform=train_transform,
-        target_transform=train_target_transform,
-    )
-    test_ds = LeafDiseaseDataset(
-        test_df,
-        img_dir=img_dir,
-        transform=test_transform,
-        target_transform=test_target_transform,
-    )
-    return train_ds, test_ds
+#     train_ds = LeafDiseaseDataset(
+#         train_df,
+#         img_dir=img_dir,
+#         transform=train_transform,
+#         target_transform=train_target_transform,
+#     )
+#     test_ds = LeafDiseaseDataset(
+#         test_df,
+#         img_dir=img_dir,
+#         transform=test_transform,
+#         target_transform=test_target_transform,
+#     )
+#     return train_ds, test_ds
 
 
 def build_transform(image_processor=None, pretrained_cfg=None):

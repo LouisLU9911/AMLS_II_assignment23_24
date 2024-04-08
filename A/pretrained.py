@@ -13,7 +13,7 @@ from .constants import (
     DEFAULT_RANDOM_SEED,
 )
 from .logger import logger
-from .dataset import get_preprocess_func
+from .dataset import get_preprocess_func, get_dataset
 
 
 class PretrainedModel:
@@ -35,27 +35,6 @@ class PretrainedModel:
         self.expert_label_mapping = config.get(
             "expert_label_mapping", DEFAULT_EXPERT_LABEL_MAPPING
         )
-
-    def _get_dataset(self):
-        from datasets import load_dataset
-
-        train_image_folder = os.path.join(self.cwd, self.dataset_path)
-        logger.info(f"Begin loading {train_image_folder} ...")
-        dataset = load_dataset(
-            "imagefolder",
-            data_dir=train_image_folder,
-            keep_in_memory=True,
-            trust_remote_code=True,
-        )
-        logger.info(f"Load {train_image_folder} successfully!")
-        splits = dataset["train"].train_test_split(
-            test_size=0.1,
-            stratify_by_column="label",
-            seed=self.seed,
-        )
-        train_ds = splits["train"]
-        val_ds = splits["test"]
-        return train_ds, val_ds
 
     def _filter_labels(self, ds, labels: List[str]):
         filtered_ds = ds.filter(
@@ -83,7 +62,9 @@ class PretrainedModel:
             Trainer,
         )
 
-        train_ds, val_ds = self._get_dataset()
+        train_ds, val_ds = get_dataset(
+            cwd=self.cwd, dataset_path=self.dataset_path, seed=self.seed
+        )
 
         model_checkpoint = self.model_name
         image_processor = AutoImageProcessor.from_pretrained(model_checkpoint)
@@ -111,7 +92,9 @@ class PretrainedModel:
         # Train all experts
         for expert_name, expert_labels in self.expert_label_mapping.items():
             labels_str = "_".join(map(str, expert_labels))
-            expert_model_name = f"{expert_name}-leaf-disease-{labels_str}"
+            expert_model_name = (
+                f"{expert_name}-leaf-disease-{model_checkpoint}-{labels_str}"
+            )
 
             # Filter labels for each expert
             expert_train_ds = self._filter_labels(train_ds, expert_labels)

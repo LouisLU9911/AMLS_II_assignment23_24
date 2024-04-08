@@ -1,341 +1,155 @@
 import os
 from typing import List
 
-import numpy as np
-import timm
-import torch
-from torch import nn
-from torch.utils.data import Dataset, DataLoader
-from transformers import (
-    TrainingArguments,
-    Trainer,
-)
-
-from .dataset import build_dataset, build_transform
+from .dataset import get_preprocess_func, get_dataset
 from .constants import (
-    DEFAULT_NUM_CLASSES,
     DEFAULT_EPOCHS,
+    DEFAULT_DATASET_IMAGEFOLDER,
     DEFAULT_RANDOM_SEED,
-    DEAULT_NUM_WORKERS_PER_DEVICE,
     DEFAULT_BATCH_SIZE_PER_DEVICE,
     DATALOADER_PREFETCH_FACTOR,
-    DEFAULT_TIMM_MODEL,
-    DEFAULT_DATASET_FOLDER,
-    DEFAULT_ANNOTATIONS_FILE,
+    DEFAULT_PRETRAINED_MODEL,
 )
 from .logger import logger
 
-
-def train(
-    model_name: str = DEFAULT_TIMM_MODEL,
-    annotations_file: str = DEFAULT_ANNOTATIONS_FILE,
-    batch_size_per_device: int = DEFAULT_BATCH_SIZE_PER_DEVICE,
-    num_workers_per_device: int = DEAULT_NUM_WORKERS_PER_DEVICE,
-    epoch: int = DEFAULT_EPOCHS,
-    img_dir: str = DEFAULT_DATASET_FOLDER,
-    seed: int = DEFAULT_RANDOM_SEED,
-    save: bool = False,
-    push_to_hub: bool = False,
-):
-    from datasets import load_metric
-
-    model = timm.create_model(
-        model_name, pretrained=True, num_classes=DEFAULT_NUM_CLASSES
-    )
-    pretrained_cfg = model.pretrained_cfg
-    train_transform, test_transform = build_transform(pretrained_cfg=pretrained_cfg)
-    train_ds, test_ds = build_dataset(
-        annotations_file=annotations_file,
-        img_dir=img_dir,
-        seed=seed,
-        test_size=0.1,
-        allowed_labels=None,
-        train_transform=train_transform,
-        test_transform=test_transform,
-    )
-    device = (
-        "cuda"
-        if torch.cuda.is_available()
-        else "mps" if torch.backends.mps.is_available() else "cpu"
-    )
-    n_devices = torch.cuda.device_count()
-    num_workers = num_workers_per_device * n_devices
-    args = TrainingArguments(
-        f"{model_name}-moe-base-model-leaf",
-        remove_unused_columns=False,
-        evaluation_strategy="epoch",
-        save_strategy="epoch",
-        learning_rate=5e-5,
-        per_device_train_batch_size=batch_size_per_device,
-        gradient_accumulation_steps=4,
-        dataloader_num_workers=num_workers,
-        dataloader_prefetch_factor=DATALOADER_PREFETCH_FACTOR,
-        per_device_eval_batch_size=batch_size_per_device,
-        num_train_epochs=epoch,
-        warmup_ratio=0.1,
-        logging_steps=10,
-        load_best_model_at_end=True,
-        seed=seed,
-        metric_for_best_model="accuracy",
-        push_to_hub=push_to_hub,
-    )
-
-    metric = load_metric("accuracy")
-
-    # the compute_metrics function takes a Named Tuple as input:
-    # predictions, which are the logits of the model as Numpy arrays,
-    # and label_ids, which are the ground-truth labels as Numpy arrays.
-    def compute_metrics(eval_pred):
-        """Computes accuracy on a batch of predictions"""
-        predictions = np.argmax(eval_pred.predictions, axis=1)
-        return metric.compute(predictions=predictions, references=eval_pred.label_ids)
-
-    def collate_fn(examples):
-        pixel_values = torch.stack([example["pixel_values"] for example in examples])
-        labels = torch.tensor([example["label"] for example in examples])
-        return {"pixel_values": pixel_values, "labels": labels}
-
-    trainer = Trainer(
-        model,
-        args,
-        train_dataset=train_ds,
-        eval_dataset=test_ds,
-        tokenizer=image_processor,
-        compute_metrics=compute_metrics,
-        data_collator=collate_fn,
-    )
-    # base_model = BaseModel(
-    #     model=model,
-    #     train_ds=train_ds,
-    #     test_ds=test_ds,
-    #     batch_size_per_device=batch_size_per_device,
-    #     num_workers_per_device=num_workers_per_device,
-    # )
-
-    # base_model.train(epoch=epoch, save=save, push_to_hub=push_to_hub)
+import numpy as np
+import torch
+from transformers import (
+    TrainingArguments,
+    Trainer,
+    AutoImageProcessor,
+    AutoModelForImageClassification,
+)
 
 
-class BaseModel:
+class SwitchGate:
     def __init__(
         self,
-        model,
-        train_ds: Dataset = None,
-        test_ds: Dataset = None,
-        batch_size_per_device: int = DEFAULT_BATCH_SIZE_PER_DEVICE,
-        num_workers_per_device: int = DEAULT_NUM_WORKERS_PER_DEVICE,
+        cwd: str,
+        model_name: str = DEFAULT_PRETRAINED_MODEL,
+        dataset_path: str = DEFAULT_DATASET_IMAGEFOLDER,
+        seed: int = DEFAULT_RANDOM_SEED,
     ) -> None:
-        self.model = model
-        self.device = (
-            "cuda"
-            if torch.cuda.is_available()
-            else "mps" if torch.backends.mps.is_available() else "cpu"
+        self.cwd = cwd
+        self.dataset_path = dataset_path
+        self.model_name = model_name
+        self.seed = seed
+
+    def _map_labels(self, ds, label_mapping: dict):
+        def map_label(example):
+            example["label"] = label_mapping[example["label"]]
+            return example
+
+        result_ds = ds.map(
+            function=map_label,
+            # input_columns=["label"],
+            num_proc=10,
         )
-        n_devices = torch.cuda.device_count()
-        if n_devices > 1:
-            logger.info(f"Use {n_devices} GPUs!")
-            self.model = nn.DataParallel(self.model)
-
-        self.batch_size_per_device = batch_size_per_device
-        self.batch_size = self.batch_size_per_device * n_devices
-        self.num_workers_per_device = num_workers_per_device
-        self.num_workers = self.num_workers_per_device * n_devices
-
-        self.train_dataloader = DataLoader(
-            train_ds, batch_size=self.batch_size, num_workers=self.num_workers
-        )
-        self.test_dataloader = DataLoader(
-            test_ds, batch_size=self.batch_size, num_workers=self.num_workers
-        )
-
-    def _train_loop(self, dataloader: DataLoader, loss_fn, optimizer):
-        from tqdm import tqdm
-
-        size = len(dataloader.dataset)
-        # Set the model to training mode - important for batch normalization and dropout layers
-        # Unnecessary in this situation but added for best practices
-        self.model.train()
-        with tqdm(total=len(dataloader.dataset)) as pbar:
-            for batch, (X, y) in enumerate(dataloader):
-                X, y = X.to(self.device), y.to(self.device)
-                # Compute prediction and loss
-                pred = self.model(X)
-                loss = loss_fn(pred, y)
-
-                # Backpropagation
-                loss.backward()
-                optimizer.step()
-                optimizer.zero_grad()
-
-                pbar.update(self.batch_size)
-                # loss, current = loss.item(), batch * batch_size + len(X)
-                # print(f"loss: {loss:>7f}  [{current:>5d}/{size:>5d}]")
-
-    def _test_loop(self, dataloader: DataLoader, loss_fn):
-        # Set the model to evaluation mode - important for batch normalization and dropout layers
-        # Unnecessary in this situation but added for best practices
-        self.model.eval()
-        size = len(dataloader.dataset)
-        num_batches = len(dataloader)
-        test_loss, correct = 0, 0
-
-        # Evaluating the model with torch.no_grad() ensures that no gradients are computed during test mode
-        # also serves to reduce unnecessary gradient computations and memory usage for tensors with requires_grad=True
-        with torch.no_grad():
-            for X, y in dataloader:
-                X, y = X.to(self.device), y.to(self.device)
-                pred = self.model(X)
-                test_loss += loss_fn(pred, y).item()
-                correct += (pred.argmax(1) == y).type(torch.float).sum().item()
-
-        test_loss /= num_batches
-        correct /= size
-        logger.info(
-            f"Test Error: \n Accuracy: {(100*correct):>0.1f}%, Avg loss: {test_loss:>8f} \n"
-        )
+        return result_ds
 
     def train(
         self,
         epoch: int = DEFAULT_EPOCHS,
-        learning_rate: int = None,
-        loss_fn=None,
-        optimizer=None,
-        save: bool = False,
+        batch_size_per_device: int = DEFAULT_BATCH_SIZE_PER_DEVICE,
+        num_workers: int = 1,
+        save_model: bool = False,
         push_to_hub: bool = False,
     ):
-        if not learning_rate:
-            learning_rate = 1e-3
-        if not loss_fn:
-            # Initialize the loss function
-            loss_fn = nn.CrossEntropyLoss()
-        if not optimizer:
-            # TODO: optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
-            optimizer = torch.optim.AdamW(self.model.parameters(), lr=learning_rate)
+        import evaluate
 
-        self.model.to(self.device)
-        for t in range(epoch):
-            logger.info(f"Epoch {t+1}\n-------------------------------")
-            self._train_loop(self.train_dataloader, loss_fn, optimizer)
-            self._test_loop(self.test_dataloader, loss_fn)
-        # TODO: save and push
+        train_ds, val_ds = get_dataset(
+            cwd=self.cwd, dataset_path=self.dataset_path, seed=self.seed
+        )
 
+        label_mapping = {0: 0, 4: 0, 1: 1, 2: 1, 3: 1}
+        train_ds = self._map_labels(train_ds, label_mapping)
+        val_ds = self._map_labels(val_ds, label_mapping)
 
-# class ExpertModel:
-#     def __init__(
-#         self,
-#         model_name: str = DEFAULT_TIMM_MODEL,
-#         annotations_file: str = DEFAULT_ANNOTATIONS_FILE,
-#         dataset_folder: str = DEFAULT_DATASET_FOLDER,
-#         allowed_labels: List[int] = None,
-#     ) -> None:
-#         self.model = timm.create_model(
-#             model_name, pretrained=True, num_classes=NUM_FINETUNE_CLASSES
-#         )
-#         pretrained_cfg = self.model.pretrained_cfg
-#         self.device = (
-#             "cuda"
-#             if torch.cuda.is_available()
-#             else "mps" if torch.backends.mps.is_available() else "cpu"
-#         )
-#         if torch.cuda.device_count() > 1:
-#             logger.info(f"Use {torch.cuda.device_count()} GPUs!")
-#             self.model = nn.DataParallel(self.model)
+        model_checkpoint = self.model_name
+        image_processor = AutoImageProcessor.from_pretrained(model_checkpoint)
+        preprocess_train, preprocess_val = get_preprocess_func(image_processor)
 
-#         train_transform, test_transform = build_transform(pretrained_cfg=pretrained_cfg)
-#         train_ds, test_ds = build_dataset(
-#             annotations_file,
-#             dataset_folder,
-#             allowed_labels=allowed_labels,
-#             train_transform=train_transform,
-#             test_transform=test_transform,
-#         )
-#         self.train_dataloader = DataLoader(
-#             train_ds, batch_size=batch_size, num_workers=NUM_WORKERS
-#         )
-#         self.test_dataloader = DataLoader(
-#             test_ds, batch_size=batch_size, num_workers=NUM_WORKERS
-#         )
+        # set id 2 label for 2 experts
+        id2label = {i: i for i in range(2)}
+        label2id = {i: i for i in range(2)}
 
-#     def _train_loop(self, dataloader: DataLoader, loss_fn, optimizer):
-#         from tqdm import tqdm
+        model = AutoModelForImageClassification.from_pretrained(
+            model_checkpoint,
+            label2id=label2id,
+            id2label=id2label,
+            ignore_mismatched_sizes=True,  # provide this in case you're planning to fine-tune an already fine-tuned checkpoint
+        )
+        model_checkpoint = model_checkpoint.split("/")[-1]
 
-#         size = len(dataloader.dataset)
-#         # Set the model to training mode - important for batch normalization and dropout layers
-#         # Unnecessary in this situation but added for best practices
-#         self.model.train()
-#         with tqdm(total=len(dataloader.dataset)) as pbar:
-#             for batch, (X, y) in enumerate(dataloader):
-#                 X, y = X.to(self.device), y.to(self.device)
-#                 # Compute prediction and loss
-#                 pred = self.model(X)
-#                 loss = loss_fn(pred, y)
+        if save_model:
+            save_strategy = "epoch"
+            load_best_model_at_end = True
+        else:
+            save_strategy = "no"
+            load_best_model_at_end = False
 
-#                 # Backpropagation
-#                 loss.backward()
-#                 optimizer.step()
-#                 optimizer.zero_grad()
+        switch_gate_name = f"switch_gate-leaf-disease-{model_checkpoint}"
 
-#                 pbar.update(batch_size)
-#                 # loss, current = loss.item(), batch * batch_size + len(X)
-#                 # print(f"loss: {loss:>7f}  [{current:>5d}/{size:>5d}]")
+        train_ds.set_transform(preprocess_train)
+        val_ds.set_transform(preprocess_val)
 
-#     def _test_loop(self, dataloader: DataLoader, loss_fn):
-#         # Set the model to evaluation mode - important for batch normalization and dropout layers
-#         # Unnecessary in this situation but added for best practices
-#         self.model.eval()
-#         size = len(dataloader.dataset)
-#         num_batches = len(dataloader)
-#         test_loss, correct = 0, 0
+        args = TrainingArguments(
+            switch_gate_name,
+            remove_unused_columns=False,
+            evaluation_strategy="epoch",
+            save_strategy=save_strategy,
+            learning_rate=5e-5,
+            per_device_train_batch_size=batch_size_per_device,
+            gradient_accumulation_steps=4,
+            dataloader_num_workers=num_workers,
+            dataloader_prefetch_factor=DATALOADER_PREFETCH_FACTOR,
+            per_device_eval_batch_size=batch_size_per_device,
+            num_train_epochs=epoch,
+            warmup_ratio=0.1,
+            logging_steps=10,
+            load_best_model_at_end=load_best_model_at_end,
+            seed=self.seed,
+            metric_for_best_model="accuracy",
+            push_to_hub=push_to_hub,
+        )
 
-#         # Evaluating the model with torch.no_grad() ensures that no gradients are computed during test mode
-#         # also serves to reduce unnecessary gradient computations and memory usage for tensors with requires_grad=True
-#         with torch.no_grad():
-#             for X, y in dataloader:
-#                 X, y = X.to(self.device), y.to(self.device)
-#                 pred = self.model(X)
-#                 test_loss += loss_fn(pred, y).item()
-#                 correct += (pred.argmax(1) == y).type(torch.float).sum().item()
+        metric = evaluate.load("accuracy")
 
-#         test_loss /= num_batches
-#         correct /= size
-#         logger.info(
-#             f"Test Error: \n Accuracy: {(100*correct):>0.1f}%, Avg loss: {test_loss:>8f} \n"
-#         )
+        # the compute_metrics function takes a Named Tuple as input:
+        # predictions, which are the logits of the model as Numpy arrays,
+        # and label_ids, which are the ground-truth labels as Numpy arrays.
+        def compute_metrics(eval_pred):
+            """Computes accuracy on a batch of predictions"""
+            predictions = np.argmax(eval_pred.predictions, axis=1)
+            return metric.compute(
+                predictions=predictions, references=eval_pred.label_ids
+            )
 
-#     def train(
-#         self,
-#         learning_rate=None,
-#         loss_fn=None,
-#         optimizer=None,
-#         save: bool = False,
-#         push_to_hub: bool = False,
-#     ):
-#         if not learning_rate:
-#             learning_rate = 1e-3
-#         if not loss_fn:
-#             # Initialize the loss function
-#             loss_fn = nn.CrossEntropyLoss()
-#         if not optimizer:
-#             # TODO: optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
-#             optimizer = torch.optim.AdamW(self.model.parameters(), lr=learning_rate)
+        def collate_fn(examples):
+            pixel_values = torch.stack(
+                [example["pixel_values"] for example in examples]
+            )
+            labels = torch.tensor([example["label"] for example in examples])
+            return {"pixel_values": pixel_values, "labels": labels}
 
-#         self.model.to(self.device)
-#         for t in range(epochs):
-#             logger.info(f"Epoch {t+1}\n-------------------------------")
-#             self._train_loop(self.train_dataloader, loss_fn, optimizer)
-#             self._test_loop(self.test_dataloader, loss_fn)
-#         # TODO: save and push
+        trainer = Trainer(
+            model,
+            args,
+            train_dataset=train_ds,
+            eval_dataset=val_ds,
+            tokenizer=image_processor,
+            compute_metrics=compute_metrics,
+            data_collator=collate_fn,
+        )
+        logger.info(f"Begin training for {switch_gate_name}...")
+        train_results = trainer.train()
+        logger.info(f"Training for {switch_gate_name} ends")
+        # rest is optional but nice to have
+        if save_model:
+            trainer.save_model()
+            trainer.log_metrics("train", train_results.metrics)
+            trainer.save_metrics("train", train_results.metrics)
+            trainer.save_state()
 
-
-# class MoEModel:
-#     def __init__(
-#         self,
-#     ) -> None:
-#         # TODO
-#         pass
-
-#     def train(self, expert_label_mapping: dict):
-#         # TODO
-#         pass
-
-#     def inference(self):
-#         pass
+    def test(self):
+        pass

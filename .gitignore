@@ -7,3 +7,7 @@ convnextv2-base-1k-224-finetuned-cassava-leaf-disease
 convnextv2-tiny-1k-224-finetuned-cassava-leaf-disease
 convnextv2-large-1k-224-finetuned-cassava-leaf-disease
 convnextv2-huge-1k-224-finetuned-cassava-leaf-disease
+BaseModel-leaf-disease-0_1_2_3_4
+Expert1-leaf-disease-0_4
+Expert2-leaf-disease-1_2_3
+switch_gate-leaf-disease-convnextv2-base-1k-224/

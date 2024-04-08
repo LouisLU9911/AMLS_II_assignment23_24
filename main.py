@@ -102,38 +102,24 @@ def setup_parse():
         default=DEFAULT_CONFIG_PATH,
         help=f"path to config.json; default: {DEFAULT_CONFIG_PATH}",
     )
-
-    subparsers = parser.add_subparsers(dest="action", help="actions provided")
-    subparsers.required = True
-
-    pretrained_parser = subparsers.add_parser("pretrained", parents=[parent_parser])
-    pretrained_parser.add_argument(
-        "--model_name",
-        action="store",
-        default=DEFAULT_PRETRAINED_MODEL,
-        help=f"pretrained model name from huggingface; default: {DEFAULT_PRETRAINED_MODEL}",
-    )
-    pretrained_parser.add_argument(
+    parent_parser.add_argument(
         "--dataset",
         action="store",
         default=DEFAULT_DATASET_IMAGEFOLDER,
         help=f"path to dataset imagefolder; default: {DEFAULT_DATASET_IMAGEFOLDER}",
     )
-
-    moe_parser = subparsers.add_parser("moe", parents=[parent_parser])
-    moe_parser.add_argument(
+    parent_parser.add_argument(
         "--model_name",
         action="store",
         default=DEFAULT_PRETRAINED_MODEL,
-        help=f"pretrained model name from timm; default: {DEFAULT_PRETRAINED_MODEL}",
-    )
-    moe_parser.add_argument(
-        "--dataset",
-        action="store",
-        default=DEFAULT_DATASET_FOLDER,
-        help=f"path to images; default: {DEFAULT_DATASET_FOLDER}",
+        help=f"pretrained model name from huggingface; default: {DEFAULT_PRETRAINED_MODEL}",
     )
 
+    subparsers = parser.add_subparsers(dest="action", help="actions provided")
+    subparsers.required = True
+
+    pretrained_parser = subparsers.add_parser("pretrained", parents=[parent_parser])
+    moe_parser = subparsers.add_parser("moe", parents=[parent_parser])
     subparsers.add_parser("info")
 
     args, _ = parser.parse_known_args()
@@ -156,14 +142,22 @@ def main():
         if args.action == "info":
             print_info()
         elif args.action == "moe":
-            from A.moe import train
+            from A.moe import SwitchGate
 
+            num_workers = args.workers * len(CUDA_VISIBLE_DEVICES.split(","))
+            model = SwitchGate(
+                cwd=CWD,
+                model_name=args.model_name,
+                dataset_path=args.dataset,
+                seed=args.seed,
+            )
             if args.mode == "train":
-                train(
-                    batch_size_per_device=args.batch,
-                    num_workers_per_device=args.workers,
+                model.train(
                     epoch=args.epoch,
-                    seed=args.seed,
+                    batch_size_per_device=args.batch,
+                    num_workers=num_workers,
+                    save_model=args.save,
+                    push_to_hub=args.push_to_hub,
                 )
             elif args.mode == "inference":
                 # TODO
