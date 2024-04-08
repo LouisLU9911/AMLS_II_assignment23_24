@@ -1,17 +1,22 @@
 DEFAULT_PRETRAINED_MODEL = "facebook/convnextv2-base-1k-224"
+DEFAULT_TIMM_MODEL = "convnextv2_base"
 
 DEFAULT_RANDOM_SEED = 42
 
-DEFAULT_BATCH_SIZE_PER_DEVICE = 180
+DEFAULT_NUM_CLASSES = 5
+
+DEFAULT_BATCH_SIZE_PER_DEVICE = 70
 DEAULT_NUM_WORKERS_PER_DEVICE = 5
 
 DEFAULT_EPOCHS = 16
 
 # For models from transforms
+DATADIR = "Datasets"
 # default imagefolder
-DEFAULT_DATASET_IMAGEFOLDER = "Datasets/imagefolder"
+DEFAULT_DATASET_IMAGEFOLDER = DATADIR + "/imagefolder"
 DATALOADER_PREFETCH_FACTOR = 1
 
 # For MoE
+DEFAULT_ANNOTATIONS_FILE = DATADIR + "/train.csv"
 # default dataset folder
-DEFAULT_DATASET_FOLDER = "Datasets/train_images"
+DEFAULT_DATASET_FOLDER = DATADIR + "/train_images"

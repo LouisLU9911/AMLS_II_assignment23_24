@@ -16,10 +16,10 @@ from A.constants import (
     DEAULT_NUM_WORKERS_PER_DEVICE,
 )
 from A.logger import logger, set_log_level
-from A.pretrained import PretrainedModel
+
 
 CWD = os.getcwd()
-CUDA_VISIBLE_DEVICES = os.getenv("CUDA_VISIBLE_DEVICES", "0,1,2,3")
+CUDA_VISIBLE_DEVICES = os.getenv("CUDA_VISIBLE_DEVICES", "")
 
 
 def setup_parse():
@@ -125,7 +125,7 @@ def setup_parse():
         "--dataset",
         action="store",
         default=DEFAULT_DATASET_FOLDER,
-        help=f"path to dataset imagefolder; default: {DEFAULT_DATASET_FOLDER}",
+        help=f"path to images; default: {DEFAULT_DATASET_FOLDER}",
     )
 
     subparsers.add_parser("info")
@@ -150,9 +150,26 @@ def main():
         if args.action == "info":
             print_info()
         elif args.action == "moe":
-            # TODO
+            from A.moe import train
+
+            if args.mode == "train":
+                train(
+                    batch_size_per_device=args.batch,
+                    num_workers_per_device=args.workers,
+                    epoch=args.epoch,
+                    seed=args.seed,
+                )
+            elif args.mode == "inference":
+                # TODO
+                model.inference()
+            else:
+                raise Exception(
+                    f"Invalid solve mode: {args.mode}; Please set --mode MODE!"
+                )
             pass
         elif args.action == "pretrained":
+            from A.pretrained import PretrainedModel
+
             num_workers = args.workers * len(CUDA_VISIBLE_DEVICES.split(","))
             model = PretrainedModel(
                 CWD,
