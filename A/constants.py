@@ -16,7 +16,11 @@ DATADIR = "Datasets"
 DEFAULT_DATASET_IMAGEFOLDER = DATADIR + "/imagefolder"
 DATALOADER_PREFETCH_FACTOR = 1
 
+DEFAULT_CONFIG_PATH = "A/config.json"
+
 # For MoE
 DEFAULT_ANNOTATIONS_FILE = DATADIR + "/train.csv"
 # default dataset folder
 DEFAULT_DATASET_FOLDER = DATADIR + "/train_images"
+
+DEFAULT_EXPERT_LABEL_MAPPING = {"BaseModel": [0, 1, 2, 3, 4]}

@@ -8,6 +8,7 @@ import sys
 
 from A.constants import (
     DEFAULT_BATCH_SIZE_PER_DEVICE,
+    DEFAULT_CONFIG_PATH,
     DEFAULT_DATASET_FOLDER,
     DEFAULT_DATASET_IMAGEFOLDER,
     DEFAULT_PRETRAINED_MODEL,
@@ -95,6 +96,12 @@ def setup_parse():
         action="store_true",
         help="push model to huggingface",
     )
+    parent_parser.add_argument(
+        "--config",
+        action="store",
+        default=DEFAULT_CONFIG_PATH,
+        help=f"path to config.json; default: {DEFAULT_CONFIG_PATH}",
+    )
 
     subparsers = parser.add_subparsers(dest="action", help="actions provided")
     subparsers.required = True
@@ -174,6 +181,7 @@ def main():
                 cwd=CWD,
                 model_name=args.model_name,
                 dataset_path=args.dataset,
+                config=args.config,
                 seed=args.seed,
             )
             if args.mode == "train":
