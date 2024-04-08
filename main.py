@@ -28,7 +28,8 @@ def setup_parse():
     description = "AMLS II Final Assignment"
     parser = argparse.ArgumentParser(description=description)
     parser.set_defaults(whether_output=True)
-    parser.add_argument(
+    parent_parser = argparse.ArgumentParser(add_help=False)
+    parent_parser.add_argument(
         "-d",
         "--debug",
         help="Print lots of debugging statements",
@@ -37,7 +38,7 @@ def setup_parse():
         const=logging.DEBUG,
         default=logging.WARNING,
     )
-    parser.add_argument(
+    parent_parser.add_argument(
         "-v",
         "--verbose",
         help="Be verbose",
@@ -45,7 +46,7 @@ def setup_parse():
         dest="loglevel",
         const=logging.INFO,
     )
-    parser.add_argument(
+    parent_parser.add_argument(
         "--seed",
         action="store",
         default=DEFAULT_RANDOM_SEED,
@@ -54,13 +55,13 @@ def setup_parse():
         nargs="?",
         help=f"random seed; default: {DEFAULT_RANDOM_SEED}",
     )
-    parser.add_argument(
+    parent_parser.add_argument(
         "--mode",
         action="store",
         default="train",
         help="train or inference",
     )
-    parser.add_argument(
+    parent_parser.add_argument(
         "--batch",
         action="store",
         default=DEFAULT_BATCH_SIZE_PER_DEVICE,
@@ -69,7 +70,7 @@ def setup_parse():
         nargs="?",
         help=f"batch size per GPU; default: {DEFAULT_BATCH_SIZE_PER_DEVICE}",
     )
-    parser.add_argument(
+    parent_parser.add_argument(
         "--epoch",
         action="store",
         default=DEFAULT_EPOCHS,
@@ -84,12 +85,12 @@ def setup_parse():
         default=DEAULT_NUM_WORKERS_PER_DEVICE,
         help=f"number of workers per GPU; default: {DEAULT_NUM_WORKERS_PER_DEVICE}",
     )
-    parser.add_argument(
+    parent_parser.add_argument(
         "--save",
         action="store_true",
         help="save model",
     )
-    parser.add_argument(
+    parent_parser.add_argument(
         "--push_to_hub",
         action="store_true",
         help="push model to huggingface",
@@ -98,9 +99,8 @@ def setup_parse():
     subparsers = parser.add_subparsers(dest="action", help="actions provided")
     subparsers.required = True
 
-    pretrained_parser = subparsers.add_parser("pretrained")
+    pretrained_parser = subparsers.add_parser("pretrained", parents=[parent_parser])
     pretrained_parser.add_argument(
-        "-m",
         "--model_name",
         action="store",
         default=DEFAULT_PRETRAINED_MODEL,
@@ -113,9 +113,8 @@ def setup_parse():
         help=f"path to dataset imagefolder; default: {DEFAULT_DATASET_IMAGEFOLDER}",
     )
 
-    moe_parser = subparsers.add_parser("moe")
+    moe_parser = subparsers.add_parser("moe", parents=[parent_parser])
     moe_parser.add_argument(
-        "-m",
         "--model_name",
         action="store",
         default=DEFAULT_PRETRAINED_MODEL,
@@ -172,16 +171,19 @@ def main():
 
             num_workers = args.workers * len(CUDA_VISIBLE_DEVICES.split(","))
             model = PretrainedModel(
-                CWD,
-                args.model_name,
-                args.dataset,
-                args.batch,
+                cwd=CWD,
+                model_name=args.model_name,
+                dataset_path=args.dataset,
+                batch_size_per_device=args.batch,
                 num_workers=num_workers,
-                epoch=args.epoch,
                 seed=args.seed,
             )
             if args.mode == "train":
-                model.train(save_model=args.save, push_to_hub=args.push_to_hub)
+                model.train(
+                    epoch=args.epoch,
+                    save_model=args.save,
+                    push_to_hub=args.push_to_hub,
+                )
             elif args.mode == "inference":
                 # TODO
                 model.inference()

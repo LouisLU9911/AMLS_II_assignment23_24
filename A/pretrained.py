@@ -20,15 +20,14 @@ class PretrainedModel:
         dataset_path: str = DEFAULT_DATASET_IMAGEFOLDER,
         batch_size_per_device: int = DEFAULT_BATCH_SIZE_PER_DEVICE,
         num_workers: int = 1,
-        epoch: int = DEFAULT_EPOCHS,
         seed: int = DEFAULT_RANDOM_SEED,
     ) -> None:
+        logger.info(f"Using {model_name}")
         self.cwd = cwd
         self.dataset_path = dataset_path
         self.batch_size_per_device = batch_size_per_device
         self.num_workers = num_workers
         self.model_name = model_name
-        self.epoch = epoch
         self.seed = seed
 
     def _get_dataset(self):
@@ -42,6 +41,7 @@ class PretrainedModel:
 
     def train(
         self,
+        epoch: int = DEFAULT_EPOCHS,
         save_model: bool = False,
         push_to_hub: bool = False,
     ):
@@ -56,7 +56,7 @@ class PretrainedModel:
         )
 
         dataset = self._get_dataset()
-        model_checkpoint = model_name
+        model_checkpoint = self.model_name
 
         image_processor = AutoImageProcessor.from_pretrained(model_checkpoint)
         preprocess_train, preprocess_val = get_preprocess_func(image_processor)
@@ -81,15 +81,17 @@ class PretrainedModel:
             id2label=id2label,
             ignore_mismatched_sizes=True,  # provide this in case you're planning to fine-tune an already fine-tuned checkpoint
         )
-        model_name = model_checkpoint.split("/")[-1]
+        model_checkpoint = model_checkpoint.split("/")[-1]
 
         if save_model:
             save_strategy = "epoch"
+            load_best_model_at_end = True
         else:
             save_strategy = "no"
+            load_best_model_at_end = False
 
         args = TrainingArguments(
-            f"{model_name}-finetuned-cassava-leaf-disease",
+            f"{model_checkpoint}-finetuned-cassava-leaf-disease",
             remove_unused_columns=False,
             evaluation_strategy="epoch",
             save_strategy=save_strategy,
@@ -99,10 +101,10 @@ class PretrainedModel:
             dataloader_num_workers=self.num_workers,
             dataloader_prefetch_factor=DATALOADER_PREFETCH_FACTOR,
             per_device_eval_batch_size=self.batch_size_per_device,
-            num_train_epochs=self.epoch,
+            num_train_epochs=epoch,
             warmup_ratio=0.1,
             logging_steps=10,
-            load_best_model_at_end=True,
+            load_best_model_at_end=load_best_model_at_end,
             seed=self.seed,
             metric_for_best_model="accuracy",
             push_to_hub=push_to_hub,
