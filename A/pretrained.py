@@ -35,7 +35,12 @@ class PretrainedModel:
 
         train_image_folder = os.path.join(self.cwd, self.dataset_path)
         logger.info(f"Begin loading {train_image_folder} ...")
-        dataset = load_dataset("imagefolder", data_dir=train_image_folder)
+        dataset = load_dataset(
+            "imagefolder",
+            data_dir=train_image_folder,
+            num_proc=5,
+            trust_remote_code=True,
+        )
         logger.info(f"Load {train_image_folder} successfully!")
         return dataset
 
@@ -47,7 +52,7 @@ class PretrainedModel:
     ):
         import numpy as np
         import torch
-        from datasets import load_metric
+        import evaluate
         from transformers import (
             AutoImageProcessor,
             AutoModelForImageClassification,
@@ -110,7 +115,7 @@ class PretrainedModel:
             push_to_hub=push_to_hub,
         )
 
-        metric = load_metric("accuracy")
+        metric = evaluate.load("accuracy")
 
         # the compute_metrics function takes a Named Tuple as input:
         # predictions, which are the logits of the model as Numpy arrays,

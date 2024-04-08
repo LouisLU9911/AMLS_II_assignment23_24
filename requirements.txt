@@ -2,6 +2,7 @@
 kaggle
 # preprocess
 datasets
+evaluate
 transformers[torch]==4.39.3
 ipykernel
 timm
