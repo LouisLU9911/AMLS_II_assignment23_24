@@ -18,15 +18,11 @@ class PretrainedModel:
         cwd: str,
         model_name: str = DEFAULT_PRETRAINED_MODEL,
         dataset_path: str = DEFAULT_DATASET_IMAGEFOLDER,
-        batch_size_per_device: int = DEFAULT_BATCH_SIZE_PER_DEVICE,
-        num_workers: int = 1,
         seed: int = DEFAULT_RANDOM_SEED,
     ) -> None:
         logger.info(f"Using {model_name}")
         self.cwd = cwd
         self.dataset_path = dataset_path
-        self.batch_size_per_device = batch_size_per_device
-        self.num_workers = num_workers
         self.model_name = model_name
         self.seed = seed
 
@@ -42,11 +38,20 @@ class PretrainedModel:
             trust_remote_code=True,
         )
         logger.info(f"Load {train_image_folder} successfully!")
-        return dataset
+        splits = dataset["train"].train_test_split(
+            test_size=0.1,
+            stratify_by_column="label",
+            seed=self.seed,
+        )
+        train_ds = splits["train"]
+        val_ds = splits["test"]
+        return train_ds, val_ds
 
     def train(
         self,
         epoch: int = DEFAULT_EPOCHS,
+        batch_size_per_device: int = DEFAULT_BATCH_SIZE_PER_DEVICE,
+        num_workers: int = 1,
         save_model: bool = False,
         push_to_hub: bool = False,
     ):
@@ -60,19 +65,12 @@ class PretrainedModel:
             Trainer,
         )
 
-        dataset = self._get_dataset()
+        train_ds, val_ds = self._get_dataset()
         model_checkpoint = self.model_name
 
         image_processor = AutoImageProcessor.from_pretrained(model_checkpoint)
         preprocess_train, preprocess_val = get_preprocess_func(image_processor)
 
-        splits = dataset["train"].train_test_split(
-            test_size=0.1,
-            stratify_by_column="label",
-            seed=self.seed,
-        )
-        train_ds = splits["train"]
-        val_ds = splits["test"]
         train_ds.set_transform(preprocess_train)
         val_ds.set_transform(preprocess_val)
 
@@ -101,11 +99,11 @@ class PretrainedModel:
             evaluation_strategy="epoch",
             save_strategy=save_strategy,
             learning_rate=5e-5,
-            per_device_train_batch_size=self.batch_size_per_device,
+            per_device_train_batch_size=batch_size_per_device,
             gradient_accumulation_steps=4,
-            dataloader_num_workers=self.num_workers,
+            dataloader_num_workers=num_workers,
             dataloader_prefetch_factor=DATALOADER_PREFETCH_FACTOR,
-            per_device_eval_batch_size=self.batch_size_per_device,
+            per_device_eval_batch_size=batch_size_per_device,
             num_train_epochs=epoch,
             warmup_ratio=0.1,
             logging_steps=10,

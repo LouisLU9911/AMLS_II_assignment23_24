@@ -174,13 +174,13 @@ def main():
                 cwd=CWD,
                 model_name=args.model_name,
                 dataset_path=args.dataset,
-                batch_size_per_device=args.batch,
-                num_workers=num_workers,
                 seed=args.seed,
             )
             if args.mode == "train":
                 model.train(
                     epoch=args.epoch,
+                    batch_size_per_device=args.batch,
+                    num_workers=num_workers,
                     save_model=args.save,
                     push_to_hub=args.push_to_hub,
                 )
