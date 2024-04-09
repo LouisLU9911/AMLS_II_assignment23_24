@@ -33,6 +33,11 @@ from transformers import (
 # so that we can train them using transformers' APIs
 AutoConfig.register(MOE_MODEL_TYPE, MoEConfig)
 AutoModelForImageClassification.register(MoEConfig, MoEModelForImageClassification)
+# Can be pushed to hub
+MoEConfig.register_for_auto_class()
+MoEModelForImageClassification.register_for_auto_class(
+    "AutoModelForImageClassification"
+)
 
 metric = evaluate.load("accuracy")
 
@@ -91,6 +96,8 @@ def train(
     )
     base_model = f"{DEFAULT_HUGGINGFACE_ACCOUNT}/BaseModel-leaf-disease-{model_checkpoint}-0_1_2_3_4"
 
+    moe_model_name = f"MoE-leaf-disease-{model_checkpoint}"
+
     model_cfg = MoEConfig(
         experts=experts,
         switch_gate=switch_gate,
@@ -98,6 +105,7 @@ def train(
         num_classes=5,
         expert_class_mapping={0: [0, 4], 1: [1, 2, 3]},
     )
+    model_cfg.save_pretrained(moe_model_name)
     model = MoEModelForImageClassification(config=model_cfg)
 
     image_processor = AutoImageProcessor.from_pretrained(experts[0])
@@ -107,8 +115,6 @@ def train(
 
     train_ds.set_transform(preprocess_train)
     val_ds.set_transform(preprocess_val)
-
-    moe_model_name = f"MoE-leaf-disease-{model_checkpoint}"
 
     if save_model:
         save_strategy = "epoch"

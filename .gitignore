@@ -11,3 +11,4 @@ switch_gate-leaf-disease-convnextv2-base-1k-224/
 Expert1-leaf-disease-convnextv2-base-1k-224-0_4/
 Expert2-leaf-disease-convnextv2-base-1k-224-1_2_3/
 BaseModel-leaf-disease-convnextv2-base-1k-224-0_1_2_3_4/
+MoE-leaf-disease-convnextv2-base-1k-224/
