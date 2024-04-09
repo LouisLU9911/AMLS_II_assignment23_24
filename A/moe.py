@@ -1,7 +1,7 @@
 import os
 from typing import List
 
-from .dataset import get_preprocess_func, get_dataset, build_transform
+from .dataset import get_preprocess_func, get_dataset
 from .constants import (
     DATALOADER_PREFETCH_FACTOR,
     DEFAULT_BATCH_SIZE_PER_DEVICE,
@@ -89,17 +89,18 @@ def train(
     switch_gate = (
         f"{DEFAULT_HUGGINGFACE_ACCOUNT}/switch_gate-leaf-disease-{model_checkpoint}"
     )
+    base_model = f"{DEFAULT_HUGGINGFACE_ACCOUNT}/BaseModel-leaf-disease-{model_checkpoint}-0_1_2_3_4"
 
     model_cfg = MoEConfig(
         experts=experts,
         switch_gate=switch_gate,
+        base_model=base_model,
         num_classes=5,
         expert_class_mapping={0: [0, 4], 1: [1, 2, 3]},
     )
     model = MoEModelForImageClassification(config=model_cfg)
 
     image_processor = AutoImageProcessor.from_pretrained(experts[0])
-    # train_transform, val_transform = build_transform(image_processor=image_processor)
     preprocess_train, preprocess_val = get_preprocess_func(
         image_processor=image_processor
     )
