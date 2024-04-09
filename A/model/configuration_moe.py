@@ -13,7 +13,7 @@ EXPERTS = [
 SWITCH_GATE = (
     f"{DEFAULT_HUGGINGFACE_ACCOUNT}/switch_gate-leaf-disease-{model_checkpoint}"
 )
-BASE_MODEL = (
+BASELINE_MODEL = (
     f"{DEFAULT_HUGGINGFACE_ACCOUNT}/BaseModel-leaf-disease-{model_checkpoint}-0_1_2_3_4"
 )
 
@@ -25,14 +25,14 @@ class MoEConfig(PretrainedConfig):
         self,
         experts: List[str] = EXPERTS,
         switch_gate: str = SWITCH_GATE,
-        base_model: str = BASE_MODEL,
+        baseline_model: str = BASELINE_MODEL,
         num_classes: int = 5,
         expert_class_mapping: Dict[int, List[int]] = None,
         **kwargs,
     ):
         self.experts = experts
         self.switch_gate = switch_gate
-        self.base_model = base_model
+        self.baseline_model = baseline_model
         self.num_classes = num_classes
         self.expert_class_mapping = expert_class_mapping
         super().__init__(**kwargs)

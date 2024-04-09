@@ -5,14 +5,14 @@ from transformers import PreTrainedModel, AutoModelForImageClassification
 from .configuration_moe import MoEConfig
 
 
-def subgate(num_classes):
+def subgate(num_out):
     layers = nn.Sequential(
         nn.Flatten(),
-        nn.Linear(224 * 224 * 3, 512),
+        nn.Linear(224 * 224 * 3, 1024),
         nn.ReLU(),
-        nn.Linear(512, 512),
+        nn.Linear(1024, 512),
         nn.ReLU(),
-        nn.Linear(512, num_classes * 2),
+        nn.Linear(512, num_out),
     )
     return layers
 
@@ -26,11 +26,8 @@ class MoEModelForImageClassification(PreTrainedModel):
         self.switch_gate_model = AutoModelForImageClassification.from_pretrained(
             config.switch_gate
         )
-        self.base_model1 = AutoModelForImageClassification.from_pretrained(
-            config.base_model
-        )
-        self.base_model2 = AutoModelForImageClassification.from_pretrained(
-            config.base_model
+        self.baseline_model = AutoModelForImageClassification.from_pretrained(
+            config.baseline_model
         )
         self.expert_model_1 = AutoModelForImageClassification.from_pretrained(
             config.experts[0]
@@ -39,14 +36,12 @@ class MoEModelForImageClassification(PreTrainedModel):
             config.experts[1]
         )
 
-        self.subgate1 = subgate(config.num_classes)
-        self.subgate2 = subgate(config.num_classes)
+        self.subgate = subgate(2)
 
         # Freeze all params
         for module in [
             self.switch_gate_model,
-            self.base_model1,
-            self.base_model2,
+            self.baseline_model,
             self.expert_model_1,
             self.expert_model_2,
         ]:
@@ -55,36 +50,25 @@ class MoEModelForImageClassification(PreTrainedModel):
 
     def forward(self, pixel_values, labels=None):
         switch_gate_result = self.switch_gate_model(pixel_values).logits
-        base_model1_result = self.base_model1(pixel_values).logits
-        base_model2_result = self.base_model2(pixel_values).logits
-
         expert1_result = self.expert_model_1(pixel_values).logits
         expert2_result = self.expert_model_2(pixel_values).logits
 
-        subgate1_result = self.subgate1(pixel_values)
-        subgate1_result = torch.reshape(subgate1_result, (2, -1, self.num_classes))
-
-        subgate2_result = self.subgate2(pixel_values)
-        subgate2_result = torch.reshape(subgate2_result, (2, -1, self.num_classes))
-
-        expert1_and_base_res = (
-            expert1_result * subgate1_result[0, :, :]
-            + base_model1_result * subgate1_result[1, :, :]
-        )
-        expert2_and_base_res = (
-            expert2_result * subgate2_result[0, :, :]
-            + base_model2_result * subgate2_result[1, :, :]
-        )
-
         # Gating Network
-        expert1_and_base_res = expert1_and_base_res * switch_gate_result[
-            :, 0
-        ].unsqueeze(1)
-        expert2_and_base_res = expert2_and_base_res * switch_gate_result[
-            :, 1
-        ].unsqueeze(1)
+        experts_result = torch.stack(
+            [expert1_result, expert2_result], dim=1
+        ) * switch_gate_result.unsqueeze(-1)
 
-        logits = expert1_and_base_res + expert2_and_base_res
+        experts_result = experts_result.sum(dim=1)
+        baseline_model_result = self.baseline_model(pixel_values).logits
+
+        subgate_result = self.subgate(pixel_values)
+        subgate_prob = F.softmax(subgate_result, dim=-1)
+
+        experts_and_base_result = torch.stack(
+            [experts_result, baseline_model_result], dim=1
+        ) * subgate_prob.unsqueeze(-1)
+
+        logits = experts_and_base_result.sum(dim=1)
         if labels is not None:
             loss = F.cross_entropy(logits, labels)
             return {"loss": loss, "logits": logits}
