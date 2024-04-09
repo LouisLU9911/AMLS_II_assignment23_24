@@ -142,17 +142,15 @@ def main():
         if args.action == "info":
             print_info()
         elif args.action == "moe":
-            from A.moe import SwitchGate
+            from A.moe import train, inference
 
             num_workers = args.workers * len(CUDA_VISIBLE_DEVICES.split(","))
-            model = SwitchGate(
-                cwd=CWD,
-                model_name=args.model_name,
-                dataset_path=args.dataset,
-                seed=args.seed,
-            )
             if args.mode == "train":
-                model.train(
+                train(
+                    cwd=CWD,
+                    model_name=args.model_name,
+                    dataset_path=args.dataset,
+                    seed=args.seed,
                     epoch=args.epoch,
                     batch_size_per_device=args.batch,
                     num_workers=num_workers,
@@ -160,8 +158,7 @@ def main():
                     push_to_hub=args.push_to_hub,
                 )
             elif args.mode == "inference":
-                # TODO
-                model.inference()
+                inference()
             else:
                 raise Exception(
                     f"Invalid solve mode: {args.mode}; Please set --mode MODE!"

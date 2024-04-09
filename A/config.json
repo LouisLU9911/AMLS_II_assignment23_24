@@ -1,8 +1,6 @@
 {
     "name": "",
     "expert_label_mapping": {
-        "Expert1": [0, 4],
-        "Expert2": [1, 2, 3],
         "BaseModel": [0, 1, 2, 3, 4]
     }
 }
