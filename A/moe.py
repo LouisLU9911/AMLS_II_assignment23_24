@@ -68,18 +68,18 @@ def train(
     save_model: bool = False,
     push_to_hub: bool = False,
 ):
-    # SwitchGate(
-    #     cwd=cwd,
-    #     model_name=model_name,
-    #     dataset_path=dataset_path,
-    #     seed=seed,
-    # ).train(
-    #     epoch=epoch,
-    #     batch_size_per_device=batch_size_per_device,
-    #     num_workers=num_workers,
-    #     save_model=save_model,
-    #     push_to_hub=push_to_hub,
-    # )
+    SwitchGate(
+        cwd=cwd,
+        model_name=model_name,
+        dataset_path=dataset_path,
+        seed=seed,
+    ).train(
+        epoch=epoch,
+        batch_size_per_device=batch_size_per_device,
+        num_workers=num_workers,
+        save_model=save_model,
+        push_to_hub=push_to_hub,
+    )
 
     # from transformers import pipeline
     model_checkpoint = model_name
