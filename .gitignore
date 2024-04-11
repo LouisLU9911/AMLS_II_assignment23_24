@@ -1,4 +1,5 @@
 **/__pycache__/
+**/.DS_Store
 vit-base-patch16-224-finetuned-cassava-leaf-disease
 vit-large-patch16-224-finetuned-cassava-leaf-disease
 resnet-101-finetuned-cassava-leaf-disease

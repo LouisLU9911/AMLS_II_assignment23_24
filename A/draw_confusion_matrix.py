@@ -1,5 +1,9 @@
 import matplotlib.pyplot as plt
-from sklearn.metrics import ConfusionMatrixDisplay, confusion_matrix
+from sklearn.metrics import (
+    ConfusionMatrixDisplay,
+    confusion_matrix,
+    classification_report,
+)
 from sklearn.model_selection import train_test_split
 from sklearn.svm import SVC
 
@@ -17,12 +21,14 @@ labels = [
     "Healthy",
 ]
 
+print(classification_report(y, y_pred))
+
 cm = confusion_matrix(y, y_pred)
 
 disp = ConfusionMatrixDisplay(
     confusion_matrix=cm,
-    display_labels=labels,
+    # display_labels=labels,
 )
 disp.plot()
-
-plt.savefig("test.png")
+plt.tight_layout()
+plt.savefig("confusion_matrix_of_base_model.png")

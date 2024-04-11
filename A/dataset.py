@@ -36,7 +36,6 @@ def get_dataset(
 
 
 class LeafDiseaseDataset(Dataset):
-
     def __init__(
         self,
         img_labels: pd.DataFrame,
