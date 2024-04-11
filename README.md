@@ -10,6 +10,7 @@
 - [Requirements](#Requirements)
 - [Datasets](#Datasets)
 - [Usage](#Usage)
+- [Models](#Models)
 
 ## Overview
 
@@ -207,3 +208,19 @@ options:
                         pretrained model name from huggingface; default:
                         facebook/convnextv2-base-1k-224
 ```
+
+## Models
+
+### Pretrained
+
+* [vit-base-patch16-224-finetuned](https://huggingface.co/louislu9911/vit-base-patch16-224-finetuned-cassava-leaf-disease)
+* [resnet-101-finetuned](https://huggingface.co/louislu9911/resnet-101-finetuned-cassava-leaf-disease)
+* [resnet-152-finetuned](https://huggingface.co/louislu9911/resnet-152-finetuned-cassava-leaf-disease)
+
+### Mixtures of Experts
+
+* [MoE](https://huggingface.co/louislu9911/MoE-leaf-disease-convnextv2-base-1k-224)
+* [SwitchGate](https://huggingface.co/louislu9911/switch_gate-leaf-disease-convnextv2-base-1k-224)
+* [Expert 1](https://huggingface.co/louislu9911/Expert1-leaf-disease-convnextv2-base-1k-224-0_4)
+* [Expert 2](https://huggingface.co/louislu9911/Expert2-leaf-disease-convnextv2-base-1k-224-1_2_3)
+* [BaseModel](https://huggingface.co/louislu9911/BaseModel-leaf-disease-convnextv2-base-1k-224-0_1_2_3_4)
