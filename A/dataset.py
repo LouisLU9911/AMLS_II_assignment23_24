@@ -1,12 +1,10 @@
-import os
-from typing import List
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""Dataset"""
 
+import os
 from .logger import logger
 from .constants import DEFAULT_RANDOM_SEED
-
-import pandas as pd
-from PIL import Image
-from torch.utils.data import Dataset
 
 
 def get_dataset(
@@ -35,75 +33,8 @@ def get_dataset(
     return train_ds, val_ds
 
 
-class LeafDiseaseDataset(Dataset):
-    def __init__(
-        self,
-        img_labels: pd.DataFrame,
-        img_dir: str,
-        transform=None,
-        target_transform=None,
-    ):
-        self.img_labels = img_labels
-        self.img_dir = img_dir
-        self.transform = transform
-        self.target_transform = target_transform
-
-    def __len__(self):
-        return len(self.img_labels)
-
-    def __getitem__(self, idx):
-        img_path = os.path.join(self.img_dir, self.img_labels.iloc[idx, 0])
-        image = Image.open(img_path)
-        label = self.img_labels.iloc[idx, 1]
-        if self.transform:
-            image = self.transform(image)
-        if self.target_transform:
-            label = self.target_transform(label)
-        return image, label
-
-
-# def build_dataset(
-#     annotations_file: str,
-#     img_dir: str,
-#     seed: int = 42,
-#     test_size: float = 0.1,
-#     allowed_labels: List[str] = None,
-#     train_transform=None,
-#     test_transform=None,
-#     train_target_transform=None,
-#     test_target_transform=None,
-# ):
-#     """Build train and test Datasets for training."""
-#     import pandas as pd
-#     from sklearn.model_selection import train_test_split
-
-#     df = pd.read_csv(annotations_file)
-
-#     train_df, test_df = train_test_split(
-#         df, test_size=test_size, stratify=df["label"], random_state=seed
-#     )
-
-#     # Filter allowed labels for different experts
-#     if allowed_labels:
-#         train_df = train_df[train_df["label"].isin(allowed_labels)]
-#         test_df = test_df[test_df["label"].isin(allowed_labels)]
-
-#     train_ds = LeafDiseaseDataset(
-#         train_df,
-#         img_dir=img_dir,
-#         transform=train_transform,
-#         target_transform=train_target_transform,
-#     )
-#     test_ds = LeafDiseaseDataset(
-#         test_df,
-#         img_dir=img_dir,
-#         transform=test_transform,
-#         target_transform=test_target_transform,
-#     )
-#     return train_ds, test_ds
-
-
 def build_transform(image_processor=None, pretrained_cfg=None):
+    """Return transform for train set and test set."""
     from torchvision.transforms import (
         CenterCrop,
         Compose,
@@ -153,6 +84,7 @@ def build_transform(image_processor=None, pretrained_cfg=None):
 
 
 def get_preprocess_func(image_processor):
+    """Return preprocess functions for AutoModelForImageClassification class"""
     train_transforms, val_transforms = build_transform(image_processor)
 
     def preprocess_train(example_batch):

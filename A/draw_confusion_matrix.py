@@ -4,8 +4,6 @@ from sklearn.metrics import (
     confusion_matrix,
     classification_report,
 )
-from sklearn.model_selection import train_test_split
-from sklearn.svm import SVC
 
 with open("y.txt", "r") as f:
     y = [int(line) for line in f.readlines()]

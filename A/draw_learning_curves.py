@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 
-# Assuming 'loss_values' is your list of loss values recorded after each epoch or iteration
+# https://huggingface.co/louislu9911/BaseModel-leaf-disease-convnextv2-base-1k-224-0_1_2_3_4
 base_model_loss = [
     0.9249,
     0.5028,
@@ -19,6 +19,7 @@ base_model_loss = [
     0.3071,
     0.3028,
 ]
+# https://huggingface.co/louislu9911/Expert1-leaf-disease-convnextv2-base-1k-224-0_4
 expert_1_loss = [
     1.2488,
     1.2488,
@@ -37,6 +38,7 @@ expert_1_loss = [
     0.5104,
     0.5104,
 ]
+# https://huggingface.co/louislu9911/Expert2-leaf-disease-convnextv2-base-1k-224-1_2_3
 expert_2_loss = [
     1.5107,
     1.0022,
@@ -55,6 +57,7 @@ expert_2_loss = [
     0.1636,
     0.1636,
 ]
+# https://huggingface.co/louislu9911/switch_gate-leaf-disease-convnextv2-base-1k-224
 switch_gate_loss = [
     0.6169,
     0.3115,
@@ -73,6 +76,7 @@ switch_gate_loss = [
     0.136,
     0.1327,
 ]
+# https://huggingface.co/louislu9911/MoE-leaf-disease-convnextv2-base-1k-224
 moe_loss = [
     0.3197,
     0.3197,
@@ -93,7 +97,7 @@ moe_loss = [
 ]
 
 # Plotting the learning curve
-plt.figure(figsize=(6, 6))  # Set the figure size (optional)
+plt.figure(figsize=(6, 6))
 plt.plot(base_model_loss, label="Base Model", marker="o")
 plt.plot(expert_1_loss, label="Expert 1", marker="o")
 plt.plot(expert_2_loss, label="Expert 2", marker="o")
