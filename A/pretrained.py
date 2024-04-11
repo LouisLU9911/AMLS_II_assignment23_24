@@ -1,4 +1,7 @@
-import os
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""Fine-tuning Pre-trained Models"""
+
 import json
 from typing import List
 
@@ -161,6 +164,3 @@ class PretrainedModel:
                 trainer.log_metrics("train", train_results.metrics)
                 trainer.save_metrics("train", train_results.metrics)
                 trainer.save_state()
-
-    def inference(self):
-        pass

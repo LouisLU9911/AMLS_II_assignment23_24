@@ -1,4 +1,7 @@
-import os
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""Mixtures of Experts"""
+
 from typing import List
 
 from .dataset import get_preprocess_func, get_dataset
@@ -165,10 +168,6 @@ def train(
         trainer.push_to_hub()
 
 
-def inference():
-    pass
-
-
 class MoE(nn.Module):
     def __init__(self, experts: List[str], switch_gate: str) -> None:
         super(MoE, self).__init__()
@@ -295,6 +294,3 @@ class SwitchGate:
             trainer.log_metrics("train", train_results.metrics)
             trainer.save_metrics("train", train_results.metrics)
             trainer.save_state()
-
-    def test(self):
-        pass

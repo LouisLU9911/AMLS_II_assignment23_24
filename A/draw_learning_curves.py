@@ -1,3 +1,7 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""Learning Curves"""
+
 import matplotlib.pyplot as plt
 
 # https://huggingface.co/louislu9911/BaseModel-leaf-disease-convnextv2-base-1k-224-0_1_2_3_4

@@ -9,14 +9,13 @@ import sys
 from A.constants import (
     DEFAULT_BATCH_SIZE_PER_DEVICE,
     DEFAULT_CONFIG_PATH,
-    DEFAULT_DATASET_FOLDER,
     DEFAULT_DATASET_IMAGEFOLDER,
     DEFAULT_PRETRAINED_MODEL,
     DEFAULT_RANDOM_SEED,
     DEFAULT_EPOCHS,
     DEAULT_NUM_WORKERS_PER_DEVICE,
 )
-from A.logger import logger, set_log_level
+from A.logger import set_log_level
 
 
 CWD = os.getcwd()
@@ -55,12 +54,6 @@ def setup_parse():
         type=int,
         nargs="?",
         help=f"random seed; default: {DEFAULT_RANDOM_SEED}",
-    )
-    parent_parser.add_argument(
-        "--mode",
-        action="store",
-        default="train",
-        help="train or inference",
     )
     parent_parser.add_argument(
         "--batch",
@@ -118,8 +111,8 @@ def setup_parse():
     subparsers = parser.add_subparsers(dest="action", help="actions provided")
     subparsers.required = True
 
-    pretrained_parser = subparsers.add_parser("pretrained", parents=[parent_parser])
-    moe_parser = subparsers.add_parser("moe", parents=[parent_parser])
+    _ = subparsers.add_parser("pretrained", parents=[parent_parser])
+    _ = subparsers.add_parser("moe", parents=[parent_parser])
     subparsers.add_parser("info")
 
     args, _ = parser.parse_known_args()
@@ -142,28 +135,20 @@ def main():
         if args.action == "info":
             print_info()
         elif args.action == "moe":
-            from A.moe import train, inference
+            from A.moe import train
 
             num_workers = args.workers * len(CUDA_VISIBLE_DEVICES.split(","))
-            if args.mode == "train":
-                train(
-                    cwd=CWD,
-                    model_name=args.model_name,
-                    dataset_path=args.dataset,
-                    seed=args.seed,
-                    epoch=args.epoch,
-                    batch_size_per_device=args.batch,
-                    num_workers=num_workers,
-                    save_model=args.save,
-                    push_to_hub=args.push_to_hub,
-                )
-            elif args.mode == "inference":
-                inference()
-            else:
-                raise Exception(
-                    f"Invalid solve mode: {args.mode}; Please set --mode MODE!"
-                )
-            pass
+            train(
+                cwd=CWD,
+                model_name=args.model_name,
+                dataset_path=args.dataset,
+                seed=args.seed,
+                epoch=args.epoch,
+                batch_size_per_device=args.batch,
+                num_workers=num_workers,
+                save_model=args.save,
+                push_to_hub=args.push_to_hub,
+            )
         elif args.action == "pretrained":
             from A.pretrained import PretrainedModel
 
@@ -175,21 +160,13 @@ def main():
                 config=args.config,
                 seed=args.seed,
             )
-            if args.mode == "train":
-                model.train(
-                    epoch=args.epoch,
-                    batch_size_per_device=args.batch,
-                    num_workers=num_workers,
-                    save_model=args.save,
-                    push_to_hub=args.push_to_hub,
-                )
-            elif args.mode == "inference":
-                # TODO
-                model.inference()
-            else:
-                raise Exception(
-                    f"Invalid solve mode: {args.mode}; Please set --mode MODE!"
-                )
+            model.train(
+                epoch=args.epoch,
+                batch_size_per_device=args.batch,
+                num_workers=num_workers,
+                save_model=args.save,
+                push_to_hub=args.push_to_hub,
+            )
         else:
             raise Exception(f"Unsupported action: {args.action}")
     except Exception as e:

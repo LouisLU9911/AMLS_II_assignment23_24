@@ -1,3 +1,7 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""Confusion Matrix"""
+
 import matplotlib.pyplot as plt
 from sklearn.metrics import (
     ConfusionMatrixDisplay,
@@ -5,9 +9,11 @@ from sklearn.metrics import (
     classification_report,
 )
 
+# Load real labels of the base model
 with open("y.txt", "r") as f:
     y = [int(line) for line in f.readlines()]
 
+# Load predicted labels of the base model
 with open("y_pred.txt", "r") as f:
     y_pred = [int(line) for line in f.readlines()]
 
