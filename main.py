@@ -74,7 +74,7 @@ def setup_parse():
         nargs="?",
         help=f"number of train epochs; default: {DEFAULT_EPOCHS}",
     )
-    parser.add_argument(
+    parent_parser.add_argument(
         "--workers",
         action="store",
         default=DEAULT_NUM_WORKERS_PER_DEVICE,

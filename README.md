@@ -88,6 +88,8 @@ datasets
 evaluate
 # fine-tuning and build custom models
 transformers[torch]==4.39.3
+# download and upload pretrained models
+huggingface_hub
 ipykernel
 ```
 
@@ -97,6 +99,13 @@ Create conda env:
 $ make create-env
 # or
 $ conda env create -f environment.yml
+```
+
+If you want to load pre-trained models in [Hugging Face](https://huggingface.co),
+you need your own [access tokens](https://huggingface.co/docs/hub/security-tokens).
+
+```bash
+$ huggingface-cli login
 ```
 
 ## Datasets
@@ -118,7 +127,25 @@ $ python prepare.py
 
 ## Usage
 
-* info
+* all options
+
+```bash
+$ python main.py --help
+usage: main.py [-h] [-d] [-v] {pretrained,moe,info} ...
+
+AMLS II Final Assignment
+
+positional arguments:
+  {pretrained,moe,info}
+                        actions provided
+
+options:
+  -h, --help            show this help message and exit
+  -d, --debug           Print lots of debugging statements
+  -v, --verbose         Be verbose
+```
+
+### `info`
 
 ```bash
 $ python main.py info
@@ -127,4 +154,54 @@ $ python main.py info
 |         Name: Zhaoyan Lu          |
 |        Student No: 23049710       |
 -------------------------------------
+```
+
+### `pretrained`
+
+```bash
+$ python main.py pretrained --help
+usage: main.py pretrained [-h] [--seed [S]] [--batch [B]] [--epoch [E]]
+                          [--workers WORKERS] [--save] [--push_to_hub]
+                          [--config CONFIG] [--dataset DATASET]
+                          [--model_name MODEL_NAME]
+
+options:
+  -h, --help            show this help message and exit
+  --seed [S]            random seed; default: 42
+  --batch [B]           batch size per GPU; default: 70
+  --epoch [E]           number of train epochs; default: 16
+  --workers WORKERS     number of workers per GPU; default: 5
+  --save                save model
+  --push_to_hub         push model to huggingface
+  --config CONFIG       path to config.json; default: A/config.json
+  --dataset DATASET     path to dataset imagefolder; default:
+                        Datasets/imagefolder
+  --model_name MODEL_NAME
+                        pretrained model name from huggingface; default:
+                        facebook/convnextv2-base-1k-224
+```
+
+### `moe`
+
+```bash
+$ python main.py moe --help
+usage: main.py moe [-h] [--seed [S]] [--batch [B]] [--epoch [E]]
+                   [--workers WORKERS] [--save] [--push_to_hub]
+                   [--config CONFIG] [--dataset DATASET]
+                   [--model_name MODEL_NAME]
+
+options:
+  -h, --help            show this help message and exit
+  --seed [S]            random seed; default: 42
+  --batch [B]           batch size per GPU; default: 70
+  --epoch [E]           number of train epochs; default: 16
+  --workers WORKERS     number of workers per GPU; default: 5
+  --save                save model
+  --push_to_hub         push model to huggingface
+  --config CONFIG       path to config.json; default: A/config.json
+  --dataset DATASET     path to dataset imagefolder; default:
+                        Datasets/imagefolder
+  --model_name MODEL_NAME
+                        pretrained model name from huggingface; default:
+                        facebook/convnextv2-base-1k-224
 ```
