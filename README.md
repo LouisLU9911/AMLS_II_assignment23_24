@@ -101,7 +101,7 @@ $ make create-env
 $ conda env create -f environment.yml
 ```
 
-If you want to load pre-trained models in [Hugging Face](https://huggingface.co),
+**IMPORTANT**: If you want to load pre-trained models in [Hugging Face](https://huggingface.co),
 you need your own [access tokens](https://huggingface.co/docs/hub/security-tokens).
 
 ```bash
