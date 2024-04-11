@@ -183,6 +183,8 @@ options:
 
 ### `moe`
 
+![](model_flowchart.png)
+
 ```bash
 $ python main.py moe --help
 usage: main.py moe [-h] [--seed [S]] [--batch [B]] [--epoch [E]]
