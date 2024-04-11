@@ -28,8 +28,7 @@ def setup_parse():
     description = "AMLS II Final Assignment"
     parser = argparse.ArgumentParser(description=description)
     parser.set_defaults(whether_output=True)
-    parent_parser = argparse.ArgumentParser(add_help=False)
-    parent_parser.add_argument(
+    parser.add_argument(
         "-d",
         "--debug",
         help="Print lots of debugging statements",
@@ -38,7 +37,7 @@ def setup_parse():
         const=logging.DEBUG,
         default=logging.WARNING,
     )
-    parent_parser.add_argument(
+    parser.add_argument(
         "-v",
         "--verbose",
         help="Be verbose",
@@ -46,6 +45,8 @@ def setup_parse():
         dest="loglevel",
         const=logging.INFO,
     )
+
+    parent_parser = argparse.ArgumentParser(add_help=False)
     parent_parser.add_argument(
         "--seed",
         action="store",

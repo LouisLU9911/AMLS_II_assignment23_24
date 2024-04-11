@@ -2,6 +2,8 @@
 kaggle
 # preprocess
 datasets
+# metrics
 evaluate
+# fine-tuning and build custom models
 transformers[torch]==4.39.3
 ipykernel

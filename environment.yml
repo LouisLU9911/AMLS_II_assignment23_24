@@ -3,14 +3,14 @@ channels:
   - defaults
 dependencies:
   - python=3.9
-  - black
-  - scikit-learn
-  - pandas
-  - ipython
-  - pillow
-  - torchvision
-  - pytorch
-  - pytorch-cuda=11.8
-  - matplotlib
+  - black                               # formatter
+  - scikit-learn                        # confusion matrix
+  - pandas                              # load dataframe
+  - ipython                             # debugging
+  - pillow                              # read images
+  - torchvision                         # pre-processing
+  - pytorch                             # build models
+  - pytorch-cuda=11.8                   # pytorch for GPU
+  - matplotlib                          # draw figures
   - pip:
     - -r requirements.txt
